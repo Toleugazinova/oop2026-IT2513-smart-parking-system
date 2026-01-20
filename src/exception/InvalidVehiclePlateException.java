@@ -1,4 +1,7 @@
 package exception;
 
-public class InvalidVehiclePlateException {
+public class InvalidVehiclePlateException extends RuntimeException {
+    public InvalidVehiclePlateException() {
+        super("Invalid or unknown vehicle plate");
+    }
 }

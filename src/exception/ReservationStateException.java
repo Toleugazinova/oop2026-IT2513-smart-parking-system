@@ -1,4 +1,7 @@
 package exception;
 
-public class ReservationStateException {
+public class ReservationStateException extends RuntimeException {
+    public ReservationStateException(String message) {
+        super(message);
+    }
 }
