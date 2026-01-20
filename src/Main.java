@@ -4,6 +4,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import repository.*;
+import service.*;
+
 public class Main {
     public static void main(String[] args) {
         System.out.println("Connecting to Supabase...");
@@ -20,5 +23,17 @@ public class Main {
             System.out.println("Error while connecting to database:");
             e.printStackTrace();
         }
+        ParkingSpotRepository spotRepo = new ParkingSpotRepository(db);
+        VehicleRepository vehicleRepo = new VehicleRepository(db);
+        TariffRepository tariffRepo = new TariffRepository(db);
+        ReservationRepository reservationRepo = new ReservationRepository(db);
+        PricingService pricingService = new PricingService();
+
+        ReservationService service = new ReservationService(
+                spotRepo, vehicleRepo, tariffRepo, reservationRepo, pricingService
+        );
+
+        service.reserveSpot("KZ777ERA");
+        service.releaseSpot("KZ777ERA");
     }
 }

@@ -1,4 +1,7 @@
 package db;
 
-public class IDatabase {
+import java.sql.Connection;
+
+public interface IDatabase {
+    Connection getConnection();
 }
