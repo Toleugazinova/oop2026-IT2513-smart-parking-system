@@ -2,15 +2,19 @@ package repository;
 
 import db.IDatabase;
 import entity.Vehicle;
+import exception.InvalidVehiclePlateException;
 
 import java.sql.*;
 
 public class VehicleRepository {
 
-    private final IDatabase db;
+    protected IDatabase db;
 
     public VehicleRepository(IDatabase db) {
-        this.db = db;
+        if (db == null) {
+            throw new NullPointerException();
+        }
+        else this.db = db;
     }
 
     public Vehicle findByPlate(String plate) {

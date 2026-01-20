@@ -4,23 +4,15 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 
 public class PostgresDB implements IDatabase {
-
-    protected String url;
-    protected String user;
-    protected String password;
-
-    public PostgresDB(String url, String user, String password) {
-        this.url = url;
-        this.user = user;
-        this.password = password;
-    }
-
     @Override
     public Connection getConnection() {
         try {
-            return DriverManager.getConnection(url, user, password);
+            return DriverManager.getConnection(
+                    "jdbc:postgresql://aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require",
+                    "postgres.ycdxqgmrsyzfgojsbucb",
+                    "Ne0DvSdLpK4URYNQ");
         } catch (Exception e) {
-            throw new RuntimeException("DB connection failed", e);
+            throw new RuntimeException(e);
         }
     }
 }

@@ -1,13 +1,16 @@
+import db.IDatabase;
 import edu.aitu.oop3.db.DatabaseConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
+import db.PostgresDB;
 import repository.*;
 import service.*;
 
 public class Main {
+    private static IDatabase db;
+
     public static void main(String[] args) {
         System.out.println("Connecting to Supabase...");
         try (Connection connection = DatabaseConnection.getConnection()) {
@@ -23,12 +26,13 @@ public class Main {
             System.out.println("Error while connecting to database:");
             e.printStackTrace();
         }
+
         ParkingSpotRepository spotRepo = new ParkingSpotRepository(db);
         VehicleRepository vehicleRepo = new VehicleRepository(db);
         TariffRepository tariffRepo = new TariffRepository(db);
         ReservationRepository reservationRepo = new ReservationRepository(db);
-        PricingService pricingService = new PricingService();
 
+        PricingService pricingService = new PricingService();
         ReservationService service = new ReservationService(
                 spotRepo, vehicleRepo, tariffRepo, reservationRepo, pricingService
         );

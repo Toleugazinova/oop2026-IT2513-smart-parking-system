@@ -12,7 +12,10 @@ public class ParkingSpotRepository {
     private final IDatabase db;
 
     public ParkingSpotRepository(IDatabase db) {
-        this.db = db;
+        if (db == null) {
+            throw new NullPointerException();
+        }
+        else this.db = db;
     }
 
     public List<ParkingSpot> findFreeSpots() {
