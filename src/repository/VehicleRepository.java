@@ -1,42 +1,35 @@
 package repository;
-
 import db.IDatabase;
 import entity.Vehicle;
 import exception.InvalidVehiclePlateException;
-
 import java.sql.*;
 
 public class VehicleRepository {
 
-    protected IDatabase db;
+    private final IDatabase db;
 
     public VehicleRepository(IDatabase db) {
-        if (db == null) {
-            throw new NullPointerException();
-        }
-        else this.db = db;
+        this.db = db;
     }
 
-    public Vehicle findByPlate(String plate) {
-        String sql = "SELECT * FROM vehicles WHERE plate_number = ?";
+    public int saveVehicle(String plate, String type) {
+        String sql = """
+            INSERT INTO vehicles (plate_number, vehicle_type)
+            VALUES (?, ?) RETURNING id
+        """;
 
-        try (Connection conn = db.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection c = db.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
 
             ps.setString(1, plate);
-            ResultSet rs = ps.executeQuery();
+            ps.setString(2, type);
 
-            if (rs.next()) {
-                return new Vehicle(
-                        rs.getInt("id"),
-                        rs.getString("plate_number"),
-                        rs.getString("vehicle_type")
-                );
-            }
+            ResultSet rs = ps.executeQuery();
+            rs.next();
+            return rs.getInt(1);
+
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-        return null;
     }
 }
-

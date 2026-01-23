@@ -42,7 +42,7 @@ public class ReservationService {
             throw new ReservationStateException("Reservation already active");
         }
 
-        List<ParkingSpot> freeSpots = spotRepo.findFreeSpots();
+        List<ParkingSpot> freeSpots = spotRepo.printFreeSpots();
         if (freeSpots.isEmpty()) {
             throw new NoFreeSpotsException();
         }

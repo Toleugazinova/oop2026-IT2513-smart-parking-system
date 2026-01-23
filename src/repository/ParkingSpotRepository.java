@@ -2,9 +2,7 @@ package repository;
 
 import db.IDatabase;
 import entity.ParkingSpot;
-
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ParkingSpotRepository {
@@ -12,45 +10,61 @@ public class ParkingSpotRepository {
     private final IDatabase db;
 
     public ParkingSpotRepository(IDatabase db) {
-        if (db == null) {
-            throw new NullPointerException();
-        }
-        else this.db = db;
+        this.db = db;
     }
 
-    public List<ParkingSpot> findFreeSpots() {
-        List<ParkingSpot> spots = new ArrayList<>();
-        String sql = "SELECT * FROM parking_spots WHERE is_available = true";
+    public List<ParkingSpot> printFreeSpots() {
+        String sql = "SELECT spot_number, spot_type FROM parking_spots WHERE is_available = true";
 
-        try (Connection conn = db.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+        try (Connection c = db.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
+            System.out.println("\n--- Available Spots ---");
             while (rs.next()) {
-                spots.add(new ParkingSpot(
-                        rs.getInt("id"),
-                        rs.getString("spot_number"),
-                        rs.getBoolean("is_available"),
-                        rs.getString("spot_type")
-                ));
+                System.out.println("Spot " + rs.getString("spot_number") +
+                        " | Type: " + rs.getString("spot_type"));
             }
+
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-        return spots;
+        return null;
+    }
+
+    public Integer findFreeSpot(String type) {
+        String sql = """
+            SELECT id FROM parking_spots 
+            WHERE is_available = true AND spot_type = ?
+            LIMIT 1
+        """;
+
+        try (Connection c = db.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
+            ps.setString(1, type);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) return rs.getInt("id");
+            return null;
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void setAvailability(int spotId, boolean available) {
         String sql = "UPDATE parking_spots SET is_available = ? WHERE id = ?";
 
-        try (Connection conn = db.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection c = db.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
 
             ps.setBoolean(1, available);
             ps.setInt(2, spotId);
             ps.executeUpdate();
+
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 }

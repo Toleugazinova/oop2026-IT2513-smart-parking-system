@@ -13,26 +13,39 @@ public class TariffRepository {
         this.db = db;
     }
 
-    public Tariff findBySpotType(String spotType) {
-        String sql = "SELECT * FROM tariffs WHERE spot_type = ?";
+    public void printAllTariffs() {
+        String sql = "SELECT spot_type, price_per_hour FROM tariffs";
 
-        try (Connection conn = db.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection c = db.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
-            ps.setString(1, spotType);
+            System.out.println("\n--- Tariffs ---");
+            while (rs.next()) {
+                System.out.println(rs.getString("spot_type") + " - " +
+                        rs.getDouble("price_per_hour") + " KZT/hour");
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public double getPriceByType(String type) {
+        String sql = "SELECT price_per_hour FROM tariffs WHERE spot_type = ?";
+
+        try (Connection c = db.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
+            ps.setString(1, type);
             ResultSet rs = ps.executeQuery();
 
-            if (rs.next()) {
-                return new Tariff(
-                        rs.getInt("id"),
-                        rs.getString("spot_type"),
-                        rs.getBigDecimal("price_per_hour")
-                );
-            }
+            if (rs.next()) return rs.getDouble("price_per_hour");
+
+            throw new RuntimeException("Tariff not found");
+
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-        return null;
     }
 }
-
