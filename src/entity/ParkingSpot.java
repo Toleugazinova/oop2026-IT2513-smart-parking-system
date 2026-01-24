@@ -15,11 +15,6 @@ public class ParkingSpot {
 
     public int getId() { return id; }
     public String getSpotNumber() { return spotNumber; }
-    public boolean isAvailable() { return isAvailable; }
     public String getSpotType() { return spotType; }
-
-    @Override
-    public String toString() {
-        return "Spot #" + spotNumber + " (" + spotType + ") - " + (isAvailable ? "FREE" : "OCCUPIED");
-    }
+    public boolean isAvailable() { return isAvailable; }
 }

@@ -1,77 +1,41 @@
-import db.IDatabase;
-import db.PostgresDB;
-import entity.ParkingSpot;
-import entity.Tariff;
-import exception.NoFreeSpotsException;
+import edu.aitu.oop3.db.DatabaseConnection;
+import edu.aitu.oop3.db.IDatabase;
 import repository.*;
-import service.PricingService;
-
+import service.*;
 import java.util.Scanner;
 
 public class SmartParkingSystem {
+    private final IDatabase db = new DatabaseConnection();
+    private final ParkingSpotRepository spotRepo = new ParkingSpotRepository(db);
+    private final TariffRepository tariffRepo = new TariffRepository(db);
+    private final VehicleRepository vehicleRepo = new VehicleRepository(db);
+    private final ReservationRepository resRepo = new ReservationRepository(db);
+    private final ReservationService resService = new ReservationService(spotRepo, vehicleRepo, tariffRepo, resRepo);
+    private final PricingService pricingService = new PricingService(resRepo, tariffRepo, spotRepo, vehicleRepo);
+    private final Scanner scanner = new Scanner(System.in);
 
-    public static void main(String[] args) {
-        IDatabase db = new PostgresDB();
-
-        ParkingSpotRepository spotRepo = new ParkingSpotRepository(db);
-        VehicleRepository vehicleRepo = new VehicleRepository(db);
-        TariffRepository tariffRepo = new TariffRepository(db);
-        ReservationRepository resRepo = new ReservationRepository(db);
-
-        ReservationService resService = new ReservationService(spotRepo, vehicleRepo, tariffRepo, resRepo);
-        PricingService pricingService = new PricingService(resRepo, tariffRepo, spotRepo, vehicleRepo);
-
-        Scanner scanner = new Scanner(System.in);
-
+    public void start() {
         while (true) {
-            System.out.println("\n--- Smart Parking System ---");
-            System.out.println("1. Print all available spots");
-            System.out.println("2. Print tariffs");
-            System.out.println("3. Park vehicle");
-            System.out.println("4. Parking fee");
-            System.out.println("5. Quit");
-            System.out.print("Choose option: ");
-
-            int choice = scanner.nextInt();
-            scanner.nextLine();
-
+            System.out.println("\n1. Print all available spots\n2. Print tariffs\n3. Park vehicle\n4. Parking fee\n5. Quit");
+            int choice = scanner.nextInt(); scanner.nextLine();
             try {
                 switch (choice) {
-                    case 1:
-                        System.out.println("Available Spots:");
-                        for (ParkingSpot s : spotRepo.getAllSpots()) {
-                            if (s.isAvailable()) System.out.println(s);
-                        }
-                        break;
-                    case 2:
-                        System.out.println("Tariffs:");
-                        for (Tariff t : tariffRepo.getAllTariffs()) {
-                            System.out.println(t);
-                        }
-                        break;
-                    case 3:
-                        System.out.print("Enter Plate Number (e.g. KZ01): ");
-                        String plate = scanner.nextLine();
-                        System.out.print("Enter Vehicle Type (sedan/suv): ");
-                        String type = scanner.nextLine();
-                        System.out.println(resService.parkVehicle(plate, type));
-                        break;
-                    case 4:
-                        System.out.print("Enter Plate Number to checkout: ");
-                        String payPlate = scanner.nextLine();
-                        System.out.println(pricingService.calculateAndPay(payPlate));
-                        break;
-                    case 5:
-                        System.out.println("Goodbye!");
-                        return;
-                    default:
-                        System.out.println("Invalid command.");
+                    case 1 -> spotRepo.printFreeSpots();
+                    case 2 -> tariffRepo.printAllTariffs();
+                    case 3 -> {
+                        System.out.print("Plate: "); String p = scanner.nextLine();
+                        System.out.print("Type: "); String t = scanner.nextLine();
+                        System.out.println(resService.parkVehicle(p, t));
+                    }
+                    case 4 -> {
+                        System.out.print("Plate: "); String p = scanner.nextLine();
+                        System.out.println(pricingService.calculateAndPay(p));
+                    }
+                    case 5 -> System.exit(0);
                 }
-            } catch (NoFreeSpotsException e) {
-                System.err.println("Error: " + e.getMessage());
-            } catch (Exception e) {
-                System.err.println("System Error: " + e.getMessage());
-            }
+            } catch (Exception e) { System.out.println("Error: " + e.getMessage()); }
         }
     }
+
+    public static void main(String[] args) { new SmartParkingSystem().start(); }
 }

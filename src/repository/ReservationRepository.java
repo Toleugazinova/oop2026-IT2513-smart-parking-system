@@ -1,6 +1,6 @@
 package repository;
 
-import db.IDatabase;
+import edu.aitu.oop3.db.IDatabase;
 import entity.Reservation;
 import java.sql.*;
 
@@ -11,42 +11,31 @@ public class ReservationRepository {
         this.db = db;
     }
 
-    public void createReservation(int vehicleId, int spotId, int tariffId) {
+    public void create(int vId, int sId, int tId) {
         try (Connection con = db.getConnection();
-             PreparedStatement st = con.prepareStatement(
-                     "INSERT INTO reservations (vehicle_id, parking_spot_id, tariff_id, start_time, status) VALUES (?, ?, ?, now(), 'Active')")) {
-            st.setInt(1, vehicleId);
-            st.setInt(2, spotId);
-            st.setInt(3, tariffId);
+             PreparedStatement st = con.prepareStatement("INSERT INTO reservations (vehicle_id, parking_spot_id, tariff_id, start_time, status) VALUES (?, ?, ?, now(), 'Active')")) {
+            st.setInt(1, vId);
+            st.setInt(2, sId);
+            st.setInt(3, tId);
             st.executeUpdate();
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) { System.out.println(e.getMessage()); }
     }
 
-    public Reservation findActiveReservation(int vehicleId) {
+    public Reservation findActiveByVehicle(int vId) {
         try (Connection con = db.getConnection();
              PreparedStatement st = con.prepareStatement("SELECT * FROM reservations WHERE vehicle_id = ? AND status = 'Active'")) {
-            st.setInt(1, vehicleId);
+            st.setInt(1, vId);
             ResultSet rs = st.executeQuery();
-            if (rs.next()) {
-                return new Reservation(
-                        rs.getInt("id"),
-                        rs.getInt("vehicle_id"),
-                        rs.getInt("parking_spot_id"),
-                        rs.getInt("tariff_id"),
-                        rs.getTimestamp("start_time"),
-                        null,
-                        "Active"
-                );
-            }
-        } catch (Exception e) { e.printStackTrace(); }
+            if (rs.next()) return new Reservation(rs.getInt("id"), rs.getInt("vehicle_id"), rs.getInt("parking_spot_id"), rs.getInt("tariff_id"), rs.getTimestamp("start_time"));
+        } catch (Exception e) { System.out.println(e.getMessage()); }
         return null;
     }
 
-    public void closeReservation(int id) {
+    public void close(int id) {
         try (Connection con = db.getConnection();
              PreparedStatement st = con.prepareStatement("UPDATE reservations SET end_time = now(), status = 'Finished' WHERE id = ?")) {
             st.setInt(1, id);
             st.executeUpdate();
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) { System.out.println(e.getMessage()); }
     }
 }

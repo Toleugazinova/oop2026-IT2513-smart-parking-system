@@ -1,7 +1,5 @@
 package exception;
 
 public class NoFreeSpotsException extends Exception {
-    public NoFreeSpotsException(String message) {
-        super(message);
-    }
+    public NoFreeSpotsException(String m) { super(m); }
 }

@@ -12,10 +12,6 @@ public class Tariff {
     }
 
     public int getId() { return id; }
+    public String getSpotType() { return spotType; }
     public double getPricePerHour() { return pricePerHour; }
-
-    @Override
-    public String toString() {
-        return "Type: " + spotType + " | Price: " + pricePerHour + " tg/hour";
-    }
 }

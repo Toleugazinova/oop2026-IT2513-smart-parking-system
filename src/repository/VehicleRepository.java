@@ -1,7 +1,7 @@
-package com.parking.repository;
+package repository;
 
-import com.parking.db.IDatabase;
-import com.parking.entity.Vehicle;
+import edu.aitu.oop3.db.IDatabase;
+import entity.Vehicle;
 import java.sql.*;
 
 public class VehicleRepository {
@@ -16,10 +16,8 @@ public class VehicleRepository {
              PreparedStatement st = con.prepareStatement("SELECT * FROM vehicles WHERE plate_number = ?")) {
             st.setString(1, plate);
             ResultSet rs = st.executeQuery();
-            if (rs.next()) {
-                return new Vehicle(rs.getInt("id"), rs.getString("plate_number"), rs.getString("vehicle_type"));
-            }
-        } catch (Exception e) { e.printStackTrace(); }
+            if (rs.next()) return new Vehicle(rs.getInt("id"), rs.getString("plate_number"), rs.getString("vehicle_type"));
+        } catch (Exception e) { System.out.println(e.getMessage()); }
         return null;
     }
 
@@ -30,7 +28,7 @@ public class VehicleRepository {
             st.setString(2, type);
             ResultSet rs = st.executeQuery();
             if (rs.next()) return rs.getInt(1);
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) { System.out.println(e.getMessage()); }
         return -1;
     }
 }

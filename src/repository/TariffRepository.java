@@ -1,10 +1,8 @@
-package com.parking.repository;
+package repository;
 
-import db.IDatabase;
+import edu.aitu.oop3.db.IDatabase;
 import entity.Tariff;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class TariffRepository {
     private final IDatabase db;
@@ -13,27 +11,23 @@ public class TariffRepository {
         this.db = db;
     }
 
-    public List<Tariff> getAllTariffs() {
-        List<Tariff> tariffs = new ArrayList<>();
+    public void printAllTariffs() {
         try (Connection con = db.getConnection();
              Statement st = con.createStatement();
              ResultSet rs = st.executeQuery("SELECT * FROM tariffs")) {
             while (rs.next()) {
-                tariffs.add(new Tariff(rs.getInt("id"), rs.getString("spot_type"), rs.getDouble("price_per_hour")));
+                System.out.println(rs.getString("spot_type") + ": " + rs.getDouble("price_per_hour") + " KZT/h");
             }
-        } catch (Exception e) { e.printStackTrace(); }
-        return tariffs;
+        } catch (Exception e) { System.out.println(e.getMessage()); }
     }
 
-    public Tariff getTariffBySpotType(String spotType) {
+    public Tariff getTariffBySpotType(String type) {
         try (Connection con = db.getConnection();
              PreparedStatement st = con.prepareStatement("SELECT * FROM tariffs WHERE spot_type = ?")) {
-            st.setString(1, spotType);
+            st.setString(1, type);
             ResultSet rs = st.executeQuery();
-            if (rs.next()) {
-                return new Tariff(rs.getInt("id"), rs.getString("spot_type"), rs.getDouble("price_per_hour"));
-            }
-        } catch (Exception e) { e.printStackTrace(); }
+            if (rs.next()) return new Tariff(rs.getInt("id"), rs.getString("spot_type"), rs.getDouble("price_per_hour"));
+        } catch (Exception e) { System.out.println(e.getMessage()); }
         return null;
     }
 
@@ -42,8 +36,8 @@ public class TariffRepository {
              PreparedStatement st = con.prepareStatement("SELECT price_per_hour FROM tariffs WHERE id = ?")) {
             st.setInt(1, id);
             ResultSet rs = st.executeQuery();
-            if (rs.next()) return rs.getDouble("price_per_hour");
-        } catch (Exception e) { e.printStackTrace(); }
-        return 0.0;
+            if (rs.next()) return rs.getDouble(1);
+        } catch (Exception e) { System.out.println(e.getMessage()); }
+        return 0;
     }
 }

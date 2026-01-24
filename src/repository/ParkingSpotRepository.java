@@ -1,10 +1,8 @@
 package repository;
 
-import db.IDatabase;
+import edu.aitu.oop3.db.IDatabase;
 import entity.ParkingSpot;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ParkingSpotRepository {
     private final IDatabase db;
@@ -13,21 +11,14 @@ public class ParkingSpotRepository {
         this.db = db;
     }
 
-    public List<ParkingSpot> getAllSpots() {
-        List<ParkingSpot> spots = new ArrayList<>();
+    public void printFreeSpots() {
         try (Connection con = db.getConnection();
              Statement st = con.createStatement();
-             ResultSet rs = st.executeQuery("SELECT * FROM parking_spots ORDER BY id")) {
+             ResultSet rs = st.executeQuery("SELECT * FROM parking_spots WHERE is_available = true")) {
             while (rs.next()) {
-                spots.add(new ParkingSpot(
-                        rs.getInt("id"),
-                        rs.getString("spot_number"),
-                        rs.getBoolean("is_available"),
-                        rs.getString("spot_type")
-                ));
+                System.out.println("Spot #" + rs.getString("spot_number") + " (" + rs.getString("spot_type") + ")");
             }
-        } catch (Exception e) { e.printStackTrace(); }
-        return spots;
+        } catch (Exception e) { System.out.println(e.getMessage()); }
     }
 
     public ParkingSpot findFirstAvailable() {
@@ -35,23 +26,18 @@ public class ParkingSpotRepository {
              Statement st = con.createStatement();
              ResultSet rs = st.executeQuery("SELECT * FROM parking_spots WHERE is_available = true LIMIT 1")) {
             if (rs.next()) {
-                return new ParkingSpot(
-                        rs.getInt("id"),
-                        rs.getString("spot_number"),
-                        rs.getBoolean("is_available"),
-                        rs.getString("spot_type")
-                );
+                return new ParkingSpot(rs.getInt("id"), rs.getString("spot_number"), rs.getBoolean("is_available"), rs.getString("spot_type"));
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) { System.out.println(e.getMessage()); }
         return null;
     }
 
-    public void updateStatus(int spotId, boolean isAvailable) {
+    public void updateStatus(int id, boolean available) {
         try (Connection con = db.getConnection();
              PreparedStatement st = con.prepareStatement("UPDATE parking_spots SET is_available = ? WHERE id = ?")) {
-            st.setBoolean(1, isAvailable);
-            st.setInt(2, spotId);
+            st.setBoolean(1, available);
+            st.setInt(2, id);
             st.executeUpdate();
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) { System.out.println(e.getMessage()); }
     }
 }

@@ -13,5 +13,4 @@ public class Vehicle {
 
     public int getId() { return id; }
     public String getPlateNumber() { return plateNumber; }
-    public String getVehicleType() { return vehicleType; }
 }

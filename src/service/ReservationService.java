@@ -1,7 +1,7 @@
 package service;
 
 import entity.*;
-import exception.*;
+import exception.NoFreeSpotsException;
 import repository.*;
 
 public class ReservationService {
@@ -10,34 +10,18 @@ public class ReservationService {
     private final TariffRepository tariffRepo;
     private final ReservationRepository resRepo;
 
-    public ReservationService(ParkingSpotRepository spotRepo, VehicleRepository vehicleRepo, TariffRepository tariffRepo, ReservationRepository resRepo) {
-        this.spotRepo = spotRepo;
-        this.vehicleRepo = vehicleRepo;
-        this.tariffRepo = tariffRepo;
-        this.resRepo = resRepo;
+    public ReservationService(ParkingSpotRepository s, VehicleRepository v, TariffRepository t, ReservationRepository r) {
+        this.spotRepo = s; this.vehicleRepo = v; this.tariffRepo = t; this.resRepo = r;
     }
 
-    public String parkVehicle(String plate, String vehicleType) throws NoFreeSpotsException {
-        Vehicle vehicle = vehicleRepo.findByPlate(plate);
-        int vehicleId;
-        if (vehicle == null) {
-            vehicleId = vehicleRepo.createVehicle(plate, vehicleType);
-        } else {
-            vehicleId = vehicle.getId();
-        }
-
-        ParkingSpot spot = spotRepo.findFirstAvailable();
-        if (spot == null) {
-            throw new NoFreeSpotsException("Sorry, no free spots available right now.");
-        }
-
-        Tariff tariff = tariffRepo.getTariffBySpotType(spot.getSpotType());
-        if (tariff == null) return "Error: No tariff found for spot type " + spot.getSpotType();
-
-        resRepo.createReservation(vehicleId, spot.getId(), tariff.getId());
-
-        spotRepo.updateStatus(spot.getId(), false);
-
-        return "Success! Vehicle " + plate + " parked at spot " + spot.getSpotNumber() + " (" + spot.getSpotType() + ")";
+    public String parkVehicle(String plate, String type) throws NoFreeSpotsException {
+        Vehicle v = vehicleRepo.findByPlate(plate);
+        int vId = (v == null) ? vehicleRepo.createVehicle(plate, type) : v.getId();
+        ParkingSpot s = spotRepo.findFirstAvailable();
+        if (s == null) throw new NoFreeSpotsException("No free spots!");
+        Tariff t = tariffRepo.getTariffBySpotType(s.getSpotType());
+        resRepo.create(vId, s.getId(), t.getId());
+        spotRepo.updateStatus(s.getId(), false);
+        return "Parked at " + s.getSpotNumber();
     }
 }
