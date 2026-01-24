@@ -3,7 +3,9 @@ package repository;
 import db.IDatabase;
 import entity.Reservation;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.time.LocalDateTime;
 
 public class ReservationRepository {
@@ -14,51 +16,69 @@ public class ReservationRepository {
         this.db = db;
     }
 
-    public void startReservation(int spotId, int vehicleId) {
+    public Reservation findActiveByVehicle(int vehicleId) {
         String sql = """
-            INSERT INTO reservations (parking_spot_id, vehicle_id, start_time)
-            VALUES (?, ?, NOW())
+            SELECT * FROM reservations
+            WHERE vehicle_id = ? AND status = 'Active'
         """;
 
-        try (Connection c = db.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        try (Connection con = db.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setInt(1, spotId);
-            ps.setInt(2, vehicleId);
+            ps.setInt(1, vehicleId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return new Reservation(
+                        rs.getInt("id"),
+                        rs.getInt("vehicle_id"),
+                        rs.getInt("parking_spot_id"),
+                        rs.getInt("tariff_id"),
+                        rs.getTimestamp("start_time").toLocalDateTime(),
+                        null,
+                        rs.getString("status")
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void createReservation(int vehicleId, int spotId, int tariffId) {
+        String sql = """
+            INSERT INTO reservations (vehicle_id, parking_spot_id, tariff_id)
+            VALUES (?, ?, ?)
+        """;
+
+        try (Connection con = db.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, vehicleId);
+            ps.setInt(2, spotId);
+            ps.setInt(3, tariffId);
             ps.executeUpdate();
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 
-    public ResultSet getActiveReservation(String plate) throws SQLException {
+    public void finishReservation(int reservationId) {
         String sql = """
-            SELECT r.id, r.parking_spot_id, t.price_per_hour
-            FROM reservations r
-            JOIN vehicles v ON r.vehicle_id = v.id
-            JOIN parking_spots p ON r.parking_spot_id = p.id
-            JOIN tariffs t ON p.spot_type = t.spot_type
-            WHERE v.plate_number = ? AND r.end_time IS NULL
+            UPDATE reservations
+            SET end_time = now(), status = 'Finished'
+            WHERE id = ?
         """;
 
-        Connection c = db.getConnection();
-        PreparedStatement ps = c.prepareStatement(sql);
-        ps.setString(1, plate);
-        return ps.executeQuery();
-    }
-
-    public void finishReservation(int reservationId) {
-        String sql = "UPDATE reservations SET end_time = NOW() WHERE id = ?";
-
-        try (Connection c = db.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        try (Connection con = db.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, reservationId);
             ps.executeUpdate();
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 }

@@ -1,8 +1,11 @@
 package repository;
+
 import db.IDatabase;
 import entity.Vehicle;
-import exception.InvalidVehiclePlateException;
-import java.sql.*;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 public class VehicleRepository {
 
@@ -12,24 +15,25 @@ public class VehicleRepository {
         this.db = db;
     }
 
-    public int saveVehicle(String plate, String type) {
-        String sql = """
-            INSERT INTO vehicles (plate_number, vehicle_type)
-            VALUES (?, ?) RETURNING id
-        """;
+    public Vehicle findByPlate(String plate) {
+        String sql = "SELECT * FROM vehicles WHERE plate_number = ?";
 
-        try (Connection c = db.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        try (Connection con = db.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, plate);
-            ps.setString(2, type);
-
             ResultSet rs = ps.executeQuery();
-            rs.next();
-            return rs.getInt(1);
 
+            if (rs.next()) {
+                return new Vehicle(
+                        rs.getInt("id"),
+                        rs.getString("plate_number"),
+                        rs.getString("vehicle_type")
+                );
+            }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
+        return null;
     }
 }
