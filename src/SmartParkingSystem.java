@@ -1,95 +1,77 @@
 import db.IDatabase;
 import db.PostgresDB;
-import exception.*;
+import entity.ParkingSpot;
+import entity.Tariff;
+import exception.NoFreeSpotsException;
 import repository.*;
-import service.*;
+import service.PricingService;
 
-import java.sql.ResultSet;
 import java.util.Scanner;
 
 public class SmartParkingSystem {
 
-    private final Scanner scanner = new Scanner(System.in);
+    public static void main(String[] args) {
+        IDatabase db = new PostgresDB();
 
-    private IDatabase db;
-    private final ParkingSpotRepository spotRepo = new ParkingSpotRepository(db);
-    private final TariffRepository tariffRepo = new TariffRepository(db);
-    private final VehicleRepository vehicleRepo = new VehicleRepository(db);
-    private final ReservationRepository reservationRepo = new ReservationRepository(db);
-    private final PricingService pricingService = new PricingService();
+        ParkingSpotRepository spotRepo = new ParkingSpotRepository(db);
+        VehicleRepository vehicleRepo = new VehicleRepository(db);
+        TariffRepository tariffRepo = new TariffRepository(db);
+        ReservationRepository resRepo = new ReservationRepository(db);
 
-    public void start() {
+        ReservationService resService = new ReservationService(spotRepo, vehicleRepo, tariffRepo, resRepo);
+        PricingService pricingService = new PricingService(resRepo, tariffRepo, spotRepo, vehicleRepo);
+
+        Scanner scanner = new Scanner(System.in);
+
         while (true) {
-            System.out.println("Smart parking system");
+            System.out.println("\n--- Smart Parking System ---");
             System.out.println("1. Print all available spots");
             System.out.println("2. Print tariffs");
             System.out.println("3. Park vehicle");
             System.out.println("4. Parking fee");
             System.out.println("5. Quit");
+            System.out.print("Choose option: ");
 
             int choice = scanner.nextInt();
             scanner.nextLine();
-            switch (choice) {
-                case 1:
-                    spotRepo.printFreeSpots();
-                case 2:
-                    tariffRepo.printAllTariffs();
-                case 3:
-                    parkVehicle();
-                case 4:
-                    parkingFee();
-                case 5:
-                    return;
+
+            try {
+                switch (choice) {
+                    case 1:
+                        System.out.println("Available Spots:");
+                        for (ParkingSpot s : spotRepo.getAllSpots()) {
+                            if (s.isAvailable()) System.out.println(s);
+                        }
+                        break;
+                    case 2:
+                        System.out.println("Tariffs:");
+                        for (Tariff t : tariffRepo.getAllTariffs()) {
+                            System.out.println(t);
+                        }
+                        break;
+                    case 3:
+                        System.out.print("Enter Plate Number (e.g. KZ01): ");
+                        String plate = scanner.nextLine();
+                        System.out.print("Enter Vehicle Type (sedan/suv): ");
+                        String type = scanner.nextLine();
+                        System.out.println(resService.parkVehicle(plate, type));
+                        break;
+                    case 4:
+                        System.out.print("Enter Plate Number to checkout: ");
+                        String payPlate = scanner.nextLine();
+                        System.out.println(pricingService.calculateAndPay(payPlate));
+                        break;
+                    case 5:
+                        System.out.println("Goodbye!");
+                        return;
+                    default:
+                        System.out.println("Invalid command.");
                 }
+            } catch (NoFreeSpotsException e) {
+                System.err.println("Error: " + e.getMessage());
+            } catch (Exception e) {
+                System.err.println("System Error: " + e.getMessage());
             }
-        }
-
-    private void parkVehicle() {
-
-        System.out.print("Enter plate number: ");
-        String plate = scanner.nextLine().toUpperCase();
-
-        System.out.print("Vehicle type: ");
-        String vehicleType = scanner.nextLine();
-
-        System.out.print("Parking type: ");
-        String spotType = scanner.nextLine();
-
-        Integer spotId = spotRepo.findFreeSpot(spotType);
-        if (spotId == null) throw new NoFreeSpotsException();
-
-        int vehicleId = vehicleRepo.saveVehicle(plate, vehicleType);
-
-        reservationRepo.startReservation(spotId, vehicleId);
-        spotRepo.setAvailability(spotId, false);
-
-        System.out.println("Vehicle parked successfully! ");
-    }
-
-    private void parkingFee() {
-
-        System.out.print("Enter plate number: ");
-        String plate = scanner.nextLine().toUpperCase();
-
-        try {
-            ResultSet rs = reservationRepo.getActiveReservation(plate);
-
-            int reservationId = rs.getInt("id");
-            int spotId = rs.getInt("parking_spot_id");
-            double pricePerHour = rs.getDouble("price_per_hour");
-
-            System.out.print("Duration of parking (hours): ");
-            int hours = scanner.nextInt();
-
-            System.out.println("Parking fee: " + pricePerHour*hours);
-
-            reservationRepo.finishReservation(reservationId);
-            spotRepo.setAvailability(spotId, true);
-
-            System.out.println("Spot is now available");
-
-        } catch (Exception e) {
-            throw new RuntimeException("Error while calculating fee");
         }
     }
 }

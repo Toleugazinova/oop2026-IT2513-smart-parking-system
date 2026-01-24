@@ -3,68 +3,55 @@ package repository;
 import db.IDatabase;
 import entity.ParkingSpot;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ParkingSpotRepository {
-
     private final IDatabase db;
 
     public ParkingSpotRepository(IDatabase db) {
         this.db = db;
     }
 
-    public List<ParkingSpot> printFreeSpots() {
-        String sql = "SELECT spot_number, spot_type FROM parking_spots WHERE is_available = true";
-
-        try (Connection c = db.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            System.out.println("\n--- Available Spots ---");
+    public List<ParkingSpot> getAllSpots() {
+        List<ParkingSpot> spots = new ArrayList<>();
+        try (Connection con = db.getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery("SELECT * FROM parking_spots ORDER BY id")) {
             while (rs.next()) {
-                System.out.println("Spot " + rs.getString("spot_number") +
-                        " | Type: " + rs.getString("spot_type"));
+                spots.add(new ParkingSpot(
+                        rs.getInt("id"),
+                        rs.getString("spot_number"),
+                        rs.getBoolean("is_available"),
+                        rs.getString("spot_type")
+                ));
             }
+        } catch (Exception e) { e.printStackTrace(); }
+        return spots;
+    }
 
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public ParkingSpot findFirstAvailable() {
+        try (Connection con = db.getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery("SELECT * FROM parking_spots WHERE is_available = true LIMIT 1")) {
+            if (rs.next()) {
+                return new ParkingSpot(
+                        rs.getInt("id"),
+                        rs.getString("spot_number"),
+                        rs.getBoolean("is_available"),
+                        rs.getString("spot_type")
+                );
+            }
+        } catch (Exception e) { e.printStackTrace(); }
         return null;
     }
 
-    public Integer findFreeSpot(String type) {
-        String sql = """
-            SELECT id FROM parking_spots 
-            WHERE is_available = true AND spot_type = ?
-            LIMIT 1
-        """;
-
-        try (Connection c = db.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-
-            ps.setString(1, type);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) return rs.getInt("id");
-            return null;
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public void updateStatus(int spotId, boolean isAvailable) {
+        try (Connection con = db.getConnection();
+             PreparedStatement st = con.prepareStatement("UPDATE parking_spots SET is_available = ? WHERE id = ?")) {
+            st.setBoolean(1, isAvailable);
+            st.setInt(2, spotId);
+            st.executeUpdate();
+        } catch (Exception e) { e.printStackTrace(); }
     }
-
-    public void setAvailability(int spotId, boolean available) {
-        String sql = "UPDATE parking_spots SET is_available = ? WHERE id = ?";
-
-        try (Connection c = db.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-
-            ps.setBoolean(1, available);
-            ps.setInt(2, spotId);
-            ps.executeUpdate();
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-}
+}}

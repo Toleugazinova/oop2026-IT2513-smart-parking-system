@@ -2,17 +2,18 @@ package db;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class PostgresDB implements IDatabase {
     @Override
-    public Connection getConnection() {
+    public Connection getConnection() throws SQLException, ClassNotFoundException {
+        String connectionUrl = "jdbc:postgresql://aws-0-eu-central-1.pooler.supabase.com:5432/postgres";
         try {
-            return DriverManager.getConnection(
-                    "jdbc:postgresql://aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require",
-                    "postgres.ycdxqgmrsyzfgojsbucb",
-                    "Ne0DvSdLpK4URYNQ");
+            Class.forName("org.postgresql.Driver");
+            return DriverManager.getConnection(connectionUrl, "postgres.your_user", "your_password");
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.out.println(e);
+            return null;
         }
     }
 }
