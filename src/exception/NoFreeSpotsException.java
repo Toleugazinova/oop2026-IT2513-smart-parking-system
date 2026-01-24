@@ -1,7 +1,7 @@
 package exception;
 
-public class NoFreeSpotsException extends RuntimeException {
-    public NoFreeSpotsException() {
-        super("No free parking spots available");
+public class NoFreeSpotsException extends Exception {
+    public NoFreeSpotsException(String message) {
+        super(message);
     }
 }

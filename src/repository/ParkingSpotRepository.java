@@ -54,4 +54,4 @@ public class ParkingSpotRepository {
             st.executeUpdate();
         } catch (Exception e) { e.printStackTrace(); }
     }
-}}
+}

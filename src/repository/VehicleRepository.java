@@ -1,10 +1,7 @@
-package repository;
+package com.parking.repository;
 
-import db.IDatabase;
-import entity.Vehicle;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import com.parking.db.IDatabase;
+import com.parking.entity.Vehicle;
 import java.sql.*;
 
 public class VehicleRepository {
